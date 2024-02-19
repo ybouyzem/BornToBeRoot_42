@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# architecture
+arch=$(uname -a)
+
+# physical CPU
+pcpu=$(grep "physical id" /proc/cpuinfo | wc -l)
+
+# logical CPU
+vcpu=$(grep "processor" /proc/cpuinfo | wc -l)
+
+# RAM
+total_ram=$(free --mega | awk 'NR == 2 {print $2}')
+usage_ram=$(free --mega | awk 'NR == 2 {print $3}')
+pram=$(free | awk '$1 == "Mem:" {printf("%.2f"),  $3/$2*100}')
+
+# disk
+total_disk=$(df -BG | grep "/dev/" | grep -v "/boot" | awk '{dt += $2} END {print dt}')
+usage_disk=$(df -BM | grep "/dev/" | grep -v "/boot" | awk '{ut += $3} END {print ut}')
+pdisk=$(df -m | grep "/dev/" | grep -v "/boot" |  awk '{disk_u += $3} {disk_t += $2} END {printf("%d", disk_u/disk_t*100)}')
+
+# CPU usage
+cpu_usage=$(mpstat | awk '$3 == "all" {printf("%.2f", 100 - $13)}')
+
+# date & time of last reboot
+lb=$(who -b | awk '$1 == "system" {print $3 " " $4}')
+
+# LVM use
+
+lvm_use=$(lsblk | grep -q "lvm" && echo yes || echo no)
+
+# connections TCP
+tcp_c=$(ss -ta | grep ESTAB | wc -l)
+
+#user log
+ulog=$(users | wc -w)
+
+# ip & mac adresse
+ip=$(hostname -I)
+mac=$(ip link | grep "ether" | awk '{print $2}')
+
+# sudo commands
+scmd=$(journalctl _COMM=sudo -q| grep "COMMAND" | wc -l)
+
+wall "	#Architecture: $arch
+	#CPU physical : $pcpuram_total = $(free --mega | awk 'NR == 2' | awk '{print $2}')
+
+	#vCPU : $vcpu
+	#Memory Usage: $usage_ram/${total_ram}MB ($pram%)
+	#Disk Usage: $usage_disk/${total_disk}MB ($pdisk%)
+	#CPU load: $cpu_usage%
+	#Last boot: $lb
+	#LVM use: $lvm_use
+	#Connections TCP : $tcp_c ESTABLISHED
+	#User log: $ulog
+	#Network: IP $ip ($mac)
+	#Sudo : $scmd cmd"

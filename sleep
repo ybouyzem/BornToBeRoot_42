@@ -1,0 +1,5 @@
+#!/bin/bash
+boot_min=$(uptime -s | cut -d ":" -f 2)
+boot_sec=$(uptime -s | cut -d ":" -f 3)
+waiting=$(($boot_min % 10 * 60 + $boot_sec))
+sleep $waiting
